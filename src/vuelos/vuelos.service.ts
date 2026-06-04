@@ -26,7 +26,27 @@ export class VuelosService {
     return this.vueloRepository.save(vuelo);
   }
 
-  findAll() {
-    return this.vueloRepository.find();
+  findAll(aerolinea?: string, activo?: string, search?: string, sort?: 'ASC' | 'DESC') {
+    const qb = this.vueloRepository.createQueryBuilder('vuelo')
+      .leftJoinAndSelect('vuelo.aerolinea', 'aerolinea'); 
+
+    if (aerolinea) {
+      qb.andWhere('aerolinea.nombre = :aerolinea', { aerolinea });
+    }
+
+    if (activo !== undefined) {
+      const isActivo = activo === 'true';
+      qb.andWhere('vuelo.activo = :activo', { activo: isActivo });
+    }
+
+    if (search) {
+      qb.andWhere('(vuelo.codigo ILIKE :search OR vuelo.destino ILIKE :search)', { search: `%${search}%` });
+    }
+
+    if (sort) {
+      qb.orderBy('vuelo.precio_base', sort);
+    }
+
+    return qb.getMany();
   }
 }
